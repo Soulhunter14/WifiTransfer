@@ -34,7 +34,7 @@ public class PruebaCliente {
 				
 			}
 			catch(Exception e) {
-				System.out.print("Whoops! It didn't work!\n");
+				System.out.print("Error al Conectar-se\n");
 			}
 		} catch (Exception e)
 		{
