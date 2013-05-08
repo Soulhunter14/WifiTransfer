@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
+import Class.Message;
+
 
 public class ThreadCliente implements Runnable{
 
@@ -26,7 +28,7 @@ public class ThreadCliente implements Runnable{
 			 ObjectInputStream ois;
 			try {
 				ois = new ObjectInputStream(socket.getInputStream());
-				Message mensaje = (Message) ois.readObject();
+				Object mensaje = ois.readObject();
 				
 				if (mensaje instanceof Message)
 				
