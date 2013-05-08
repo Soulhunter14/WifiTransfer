@@ -5,7 +5,6 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import Apuntes.MensajeDameFichero;
 
 public class FileServer {
 

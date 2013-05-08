@@ -1,5 +1,7 @@
 package server;
 
+import javax.swing.plaf.SliderUI;
+
 public class ThreadCliente implements Runnable{
 
 	@Override
@@ -10,16 +12,17 @@ public class ThreadCliente implements Runnable{
 		
 		System.out.println("Aceptado cliente");
 		
-		
+		int i =0;
 		
 		 while (true)
 	      {
 	         // Código para atender la peticion
-			 
-			 break;
+			 i++;
+			 System.out.println(i);
+			 //break;
 	      }
 		 
-		 System.out.println("Hilo acabado");
+		 //System.out.println("Hilo acabado");
 		
 /*		// Cuando se cierre el socket, esta opción hara que el cierre se
         // retarde automáticamente hasta 10 segundos dando tiempo al cliente
