@@ -21,7 +21,7 @@ public class Files implements Serializable{
 	private byte[] contenidoFichero = new byte[LONGITUD_MAXIMA];
 
 	/** Número máximo de bytes que se enviaán en cada mensaje */
-	public final static int LONGITUD_MAXIMA=10;
+	public final static int LONGITUD_MAXIMA=4000;
 
 	public String getNombreFichero() {
 		return nombreFichero;
