@@ -1,7 +1,7 @@
 package Class;
 
-import java.io.File;
 import java.io.Serializable;
+import java.util.Vector;
 
 
 public class Message implements Serializable{
@@ -13,7 +13,8 @@ public class Message implements Serializable{
 
 	private String orden;
 	private String path;
-	private File[] list;
+	private Vector<String> dire = new Vector<String>();
+	private Vector<String> docs = new Vector<String>();
 
 	public String getOrden() {
 		return orden;
@@ -31,12 +32,29 @@ public class Message implements Serializable{
 		this.path = path;
 	}
 
-	public File[] getList() {
-		return list;
+	public Vector<String> getDire() {
+		return dire;
 	}
 
-	public void setList(File[] list) {
-		this.list = list;
+	public void setDire(Vector<String> dire) {
+		this.dire = dire;
 	}
 
+	public Vector<String> getDocs() {
+		return docs;
+	}
+
+	public void setDocs(Vector<String> docs) {
+		this.docs = docs;
+	}
+	
+	public void addDire(String dire)
+	{
+		this.dire.add(dire);
+	}
+
+	public void addDocs(String docs)
+	{
+		this.dire.add(docs);
+	}
 }

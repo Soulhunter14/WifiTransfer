@@ -1,48 +1,136 @@
 package server;
 
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SpringLayout;
+import javax.swing.SwingConstants;
 
 /**
  * AX Team. 
  * Classe servidor que permite las conexiones entrantes via Sockets.
  * 
  */
-public class FileServer {
+public class FileServer extends JFrame implements ActionListener {
 
-	public static void main(String[] args)
-    {
-        FileServer fs = new FileServer();
-        fs.listen(35557);
-    }
-
-	@SuppressWarnings({ "resource" })
-	private void listen(int port) {
-
-        try
-        {
-            // Se abre el socket servidor
-        	ServerSocket socketServidor = new ServerSocket(port);
-            
-            while (true)
-            {
-            	
-                // Se espera y acepta un nuevo cliente
-            	Socket cliente = socketServidor.accept();
-            	cliente.setSoLinger(true, 10);
-            	
-                // Se instancia una clase para atender al cliente y se lanza en
-                // un hilo aparte.
-                Runnable newclient = new ThreadCliente(cliente); 
-                Thread hilo = new Thread(newclient);
-                hilo.start();       
-            } 
-            
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-		
-	}
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 56L;
+	static FileServer fs;
+	Thread hilo;
+	JLabel title;
+	JLabel home;
+	JLabel ip;
+	JLabel puerto;
+	JButton iniciar;
+	Runnable startServer;
+	Long id;
 	
+	public static void main(String[] args)
+	{
+		fs = new FileServer();
+		// fs.listen(35557);
+	}
+
+	public FileServer() {
+		super();
+		initialize();
+	}
+
+	private void initialize() {
+
+		this.setTitle("WifiTransfer");
+		this.setSize(new Dimension(500,350)); 
+		this.setMinimumSize(new Dimension(500,350));
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setContentPane(crearPanel());
+		this.setVisible(true);
+	}
+
+	private JPanel crearPanel(){
+		JPanel jp = new JPanel();
+		SpringLayout sl = new SpringLayout();
+		jp.setLayout(sl);
+
+		title = new JLabel("WIFI-TRANSFER");
+		title.setForeground(Color.RED);
+		title.setFont(new java.awt.Font("Tahoma", 0, 36));
+
+		home = new JLabel("",SwingConstants.CENTER);
+		home.setIcon(new  ImageIcon(getClass().getClassLoader().getResource("images/logo.gif")));
+		home.setLayout( new BorderLayout() );
+
+		try {
+			ip = new JLabel("Dirección IP: "+InetAddress.getLocalHost().getHostAddress());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		puerto = new JLabel("La aplicación funciona a través de el puerto: 8888");
+
+		iniciar = new JButton("Iniciar Servidor");
+		iniciar.addActionListener(this);
+
+		//Constraints//
+		sl.putConstraint(SpringLayout.NORTH, home, 125, SpringLayout.NORTH, this);
+		sl.putConstraint(SpringLayout.WEST, home, 100, SpringLayout.WEST, this);
+
+		sl.putConstraint(SpringLayout.NORTH, title, 70, SpringLayout.NORTH, this);
+		sl.putConstraint(SpringLayout.WEST, title, 125, SpringLayout.WEST, this);
+
+		sl.putConstraint(SpringLayout.NORTH, ip, 150, SpringLayout.NORTH, this);
+		sl.putConstraint(SpringLayout.WEST, ip, 125, SpringLayout.WEST, this);
+
+		sl.putConstraint(SpringLayout.NORTH, puerto, 15, SpringLayout.SOUTH, ip);
+		sl.putConstraint(SpringLayout.WEST, puerto, 0, SpringLayout.WEST, ip);
+
+		sl.putConstraint(SpringLayout.NORTH, iniciar, 15, SpringLayout.SOUTH, puerto);
+		sl.putConstraint(SpringLayout.EAST, iniciar, 0, SpringLayout.EAST, puerto);
+
+		//jp.add(home);
+		jp.add(title);
+		jp.add(ip);
+		jp.add(puerto);
+		jp.add(iniciar);
+		return jp;
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		if ("Iniciar Servidor".equals(e.getActionCommand())){
+			iniciar.setText("Detener Servidor");
+			this.repaint();
+			startServer = new ThreadServer(); 
+			hilo = new Thread(startServer);
+			hilo.start();
+
+		}
+		if ("Detener Servidor".equals(e.getActionCommand())){
+			if(JOptionPane.showConfirmDialog(this, "Realmente desea cerrar el servidor?", "Si", 
+					JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)==0){
+				iniciar.setText("Iniciar Servidor");
+				
+				this.repaint();
+				System.out.print(hilo.getState());
+				hilo.stop();
+				//Thread t2
+				//hilo.interrupt();
+				//hilo.destroy();
+				System.out.print(hilo.getState());
+			}
+		}
+	}
 }

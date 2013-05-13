@@ -22,18 +22,17 @@ public class ThreadCliente implements Runnable{
 	@Override
 	public void run() {
 
-		System.out.println("Bienvenido al servidor");
-
 		while (true)
 		{
 			// Código para atender la peticion
 			ObjectInputStream ois;
 			try {
+
+				System.out.println("A la espera de mensaje");
 				ois = new ObjectInputStream(socket.getInputStream());
 				Object mensaje = ois.readObject();
 
 				if (mensaje instanceof Message){
-					System.out.println(((Message) mensaje).getOrden());
 					gestionMessage((Message)mensaje);
 				}
 				else
@@ -48,37 +47,71 @@ public class ThreadCliente implements Runnable{
 				e.printStackTrace();
 			}
 			//System.out.println(i);
-			break;
+			//break;
 		}
 	}
 
 	@SuppressWarnings({ })
 	private void gestionMessage(Message mensaje) throws IOException {
 		// TODO Auto-generated method stub
-
+		File[] listfiles;
+		int i = 0;
+		
+		
 		if(mensaje.getOrden().equals("CgetList")){
 			if(mensaje.getPath()==null){
+				System.out.println(mensaje.getOrden()+" sin path\n");
 				String path = System.getProperty("user.dir");
 				File directori = new File(path);
 				mensaje = new Message();
 				mensaje.setOrden("SputList");
-				mensaje.setPath(path);
-				mensaje.setList(directori.listFiles());			
+				mensaje.setPath(System.getProperty("user.dir"));
+				listfiles = directori.listFiles();
+				i = 0;
+				
+				
+				while(i<listfiles.length)
+				{
+					if(listfiles[i].isDirectory()){
+						mensaje.addDire(listfiles[i].getName());
+					}
+					else{
+						mensaje.addDocs(listfiles[i].getName());
+					}
+					i++;
+				}		
 			}else{
+
+				System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 				String path = mensaje.getPath();
 				File directori = new File(path);
 				mensaje = new Message();
 				mensaje.setOrden("SputList");
 				mensaje.setPath(path);
-				mensaje.setList(directori.listFiles());	
+				listfiles = directori.listFiles();
+				
+				while(i<listfiles.length)
+				{
+					if(listfiles[i].isDirectory()){
+						mensaje.addDire(listfiles[i].getName());
+					}
+					else{
+						mensaje.addDocs(listfiles[i].getName());
+					}
+					i++;
+				}		
 			}
 		}
 
 		if(mensaje.getOrden().equals("CgetFile")){
+
+			System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 			getFile(mensaje);
 		}
 
 		if(mensaje.getOrden().equals("CputFile")){
+
+			System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 			putFile(mensaje);
 		}
 
@@ -93,13 +126,13 @@ public class ThreadCliente implements Runnable{
 		{
 			// Se envía un mensaje de petición de fichero.
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-			
+
 			mensaje = new Message();
 			mensaje.setOrden("SgetFile");
 			oos.writeObject(mensaje);
-			
+
 			// Se abre un fichero para empezar a copiar lo que se reciba.
-			
+
 			// Se crea un ObjectInputStream del socket para leer los mensajes
 			// que contienen el fichero.
 			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
@@ -200,6 +233,7 @@ public class ThreadCliente implements Runnable{
 	private void enviaMessage(Message mensaje) {
 		// TODO Auto-generated method stub
 		try {
+			System.out.println("Mensaje enviador correctamente.");
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(mensaje);
 		}
