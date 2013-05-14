@@ -3,10 +3,14 @@ package server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import Class.Files;
 import Class.Message;
 
@@ -14,6 +18,8 @@ import Class.Message;
 public class ThreadCliente implements Runnable{
 
 	private Socket socket;
+	FileWriter log;
+	String resume;
 	public ThreadCliente(Socket socket)
 	{
 		this.socket = socket;
@@ -21,6 +27,14 @@ public class ThreadCliente implements Runnable{
 
 	@Override
 	public void run() {
+		try {
+			File f = new File(getPath(),getFechaActual()+"_"+socket.getInetAddress().toString().substring(1, socket.getInetAddress().toString().length())+".txt");
+			log = new FileWriter(f);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		resume = log.toString();
+		resume =getHoraActual()+" Conexión Aceptada\r\n";
 
 		while (true)
 		{
@@ -28,7 +42,7 @@ public class ThreadCliente implements Runnable{
 			ObjectInputStream ois;
 			try {
 
-				System.out.println("A la espera de mensaje");
+				resume+="\r\n"+getHoraActual()+" A la espera de mensaje\r\n";
 				ois = new ObjectInputStream(socket.getInputStream());
 				Object mensaje = ois.readObject();
 
@@ -40,62 +54,73 @@ public class ThreadCliente implements Runnable{
 					System.out.print("Error");
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+				resume+="\r\n"+getHoraActual()+" Conexión cerrada por el servidor.";
+				try {
+					log.write(resume);
+					log.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+
+				break;
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("Class no encontrada");
+				break;
 			}
-			//System.out.println(i);
-			//break;
 		}
 	}
 
 	@SuppressWarnings({ })
 	private void gestionMessage(Message mensaje) throws IOException {
-		// TODO Auto-generated method stub
 		File[] listfiles;
 		int i = 0;
-		
-		
+
+
 		if(mensaje.getOrden().equals("CgetList")){
 			if(mensaje.getPath()==null){
+				resume+="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" sin path\r\n";
 				System.out.println(mensaje.getOrden()+" sin path\n");
 				String path = System.getProperty("user.dir");
 				File directori = new File(path);
 				mensaje = new Message();
 				mensaje.setOrden("SputList");
+				mensaje.setSo(System.getProperty("os.name"));
 				mensaje.setPath(System.getProperty("user.dir"));
 				listfiles = directori.listFiles();
 				i = 0;
-				
-				
+
 				while(i<listfiles.length)
 				{
-					if(listfiles[i].isDirectory()){
-						mensaje.addDire(listfiles[i].getName());
-					}
-					else{
-						mensaje.addDocs(listfiles[i].getName());
+					if(!listfiles[i].isHidden()){
+						if(listfiles[i].isDirectory()){
+							mensaje.addDire(listfiles[i].getName());
+						}
+						else{
+							mensaje.addDocs(listfiles[i].getName());
+						}
 					}
 					i++;
 				}		
 			}else{
-
+				resume+="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" "+mensaje.getPath()+"\r\n";
 				System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 				String path = mensaje.getPath();
 				File directori = new File(path);
 				mensaje = new Message();
 				mensaje.setOrden("SputList");
-				mensaje.setPath(path);
+				mensaje.setSo(System.getProperty("os.name"));
+
+
 				listfiles = directori.listFiles();
-				
 				while(i<listfiles.length)
 				{
+					System.out.println(listfiles[i].isDirectory());
 					if(listfiles[i].isDirectory()){
 						mensaje.addDire(listfiles[i].getName());
 					}
-					else{
+					else
+					{
 						mensaje.addDocs(listfiles[i].getName());
 					}
 					i++;
@@ -104,13 +129,13 @@ public class ThreadCliente implements Runnable{
 		}
 
 		if(mensaje.getOrden().equals("CgetFile")){
-
+			resume +="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" "+mensaje.getPath()+"\r\n";
 			System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 			getFile(mensaje);
 		}
 
 		if(mensaje.getOrden().equals("CputFile")){
-
+			resume +="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" "+mensaje.getPath()+"\r\n";
 			System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 			putFile(mensaje);
 		}
@@ -121,7 +146,6 @@ public class ThreadCliente implements Runnable{
 	}
 
 	private void putFile(Message mensaje) {
-		// TODO Auto-generated method stub
 		try
 		{
 			// Se envía un mensaje de petición de fichero.
@@ -129,6 +153,7 @@ public class ThreadCliente implements Runnable{
 
 			mensaje = new Message();
 			mensaje.setOrden("SgetFile");
+			mensaje.setSo(System.getProperty("os.name"));
 			oos.writeObject(mensaje);
 
 			// Se abre un fichero para empezar a copiar lo que se reciba.
@@ -165,7 +190,7 @@ public class ThreadCliente implements Runnable{
 			// Se cierra socket y fichero
 			fos.close();
 			ois.close();
-			socket.close();
+			//socket.close();
 
 		} catch (Exception e)
 		{
@@ -176,7 +201,6 @@ public class ThreadCliente implements Runnable{
 
 	@SuppressWarnings("resource")
 	private void getFile(Message mensaje) throws IOException {
-		// TODO Auto-generated method stub
 		// Una variable auxiliar para marcar cuando se envía el último mensaje
 		boolean enviadoUltimo=false;
 		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -231,7 +255,6 @@ public class ThreadCliente implements Runnable{
 	}
 
 	private void enviaMessage(Message mensaje) {
-		// TODO Auto-generated method stub
 		try {
 			System.out.println("Mensaje enviador correctamente.");
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -241,6 +264,40 @@ public class ThreadCliente implements Runnable{
 			System.out.print("Error al Conectar-se\n");
 		}
 	} 
+
+	public static String getHoraActual() {
+		Date ahora = new Date();
+		SimpleDateFormat formateador = new SimpleDateFormat("kk:mm:ss ");
+		return formateador.format(ahora);
+	}
+
+	public static String getFechaActual() {
+		Date ahora = new Date();
+		SimpleDateFormat formateador = new SimpleDateFormat("yyyy-M-dd");
+		return formateador.format(ahora);
+	}
+
+	public static String getFechaHoraActual() {
+		Date ahora = new Date();
+		SimpleDateFormat formateador = new SimpleDateFormat("yyyy-M-dd kk:mm:ss ");
+		return formateador.format(ahora);
+	}
+
+	private String getPath() {
+		File f = new File(System.getProperty("user.dir"));
+		File[] dire = f.listFiles();
+		int i = 0;
+		while(i<dire.length)
+		{
+			if(dire[i].getName().equals("log"))
+			{
+				return dire[i].getAbsolutePath();
+			}
+			i++;
+		}
+		return null;
+
+	}
 
 }
 

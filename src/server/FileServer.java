@@ -5,7 +5,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 
 import javax.swing.ImageIcon;
@@ -29,6 +31,7 @@ public class FileServer extends JFrame implements ActionListener {
 	 */
 	private static final long serialVersionUID = 56L;
 	static FileServer fs;
+	ServerSocket socketServidor;
 	Thread hilo;
 	JLabel title;
 	JLabel home;
@@ -37,11 +40,10 @@ public class FileServer extends JFrame implements ActionListener {
 	JButton iniciar;
 	Runnable startServer;
 	Long id;
-	
+
 	public static void main(String[] args)
 	{
 		fs = new FileServer();
-		// fs.listen(35557);
 	}
 
 	public FileServer() {
@@ -75,7 +77,6 @@ public class FileServer extends JFrame implements ActionListener {
 		try {
 			ip = new JLabel("Dirección IP: "+InetAddress.getLocalHost().getHostAddress());
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		puerto = new JLabel("La aplicación funciona a través de el puerto: 8888");
@@ -112,24 +113,30 @@ public class FileServer extends JFrame implements ActionListener {
 		// TODO Auto-generated method stub
 		if ("Iniciar Servidor".equals(e.getActionCommand())){
 			iniciar.setText("Detener Servidor");
-			this.repaint();
-			startServer = new ThreadServer(); 
-			hilo = new Thread(startServer);
-			hilo.start();
-
+			try {
+				socketServidor = new ServerSocket(8888);
+				this.repaint();
+				startServer = new ThreadServer(socketServidor); 
+				hilo = new Thread(startServer);
+				hilo.start();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 		if ("Detener Servidor".equals(e.getActionCommand())){
 			if(JOptionPane.showConfirmDialog(this, "Realmente desea cerrar el servidor?", "Si", 
 					JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)==0){
 				iniciar.setText("Iniciar Servidor");
-				
+
 				this.repaint();
-				System.out.print(hilo.getState());
-				hilo.stop();
-				//Thread t2
-				//hilo.interrupt();
-				//hilo.destroy();
-				System.out.print(hilo.getState());
+				try {
+					socketServidor.close();
+					hilo.interrupt();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		}
 	}

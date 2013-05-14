@@ -13,8 +13,10 @@ public class Message implements Serializable{
 
 	private String orden;
 	private String path;
+	private String so;
 	private Vector<String> dire = new Vector<String>();
 	private Vector<String> docs = new Vector<String>();
+	private String error;
 
 	public String getOrden() {
 		return orden;
@@ -55,6 +57,22 @@ public class Message implements Serializable{
 
 	public void addDocs(String docs)
 	{
-		this.dire.add(docs);
+		this.docs.add(docs);
+	}
+
+	public String getSo() {
+		return so;
+	}
+
+	public void setSo(String so) {
+		this.so = so;
+	}
+
+	public String getError() {
+		return error;
+	}
+
+	public void setError(String error) {
+		this.error = error;
 	}
 }
