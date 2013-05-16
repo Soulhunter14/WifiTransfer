@@ -1,8 +1,10 @@
 package server;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -13,6 +15,7 @@ import java.util.Date;
 
 import Class.Files;
 import Class.Message;
+import Class.Usuario;
 
 
 public class ThreadCliente implements Runnable{
@@ -20,6 +23,7 @@ public class ThreadCliente implements Runnable{
 	private Socket socket;
 	FileWriter log;
 	String resume;
+	ObjectInputStream ois;
 	public ThreadCliente(Socket socket)
 	{
 		this.socket = socket;
@@ -28,6 +32,7 @@ public class ThreadCliente implements Runnable{
 	@Override
 	public void run() {
 		try {
+
 			File f = new File(getPath(),getFechaActual()+"_"+socket.getInetAddress().toString().substring(1, socket.getInetAddress().toString().length())+".txt");
 			log = new FileWriter(f);
 		} catch (IOException e1) {
@@ -35,12 +40,22 @@ public class ThreadCliente implements Runnable{
 		}
 		resume = log.toString();
 		resume =getHoraActual()+" Conexión Aceptada\r\n";
-
+		
+		while(!validaUsuario());
+		
 		while (true)
 		{
-			// Código para atender la peticion
-			ObjectInputStream ois;
+
+			ObjectOutputStream oos;
+
+
 			try {
+
+				oos = new ObjectOutputStream(socket.getOutputStream());
+				Message mensaje2 = new Message();
+				mensaje2.setOrden("Login");
+				mensaje2.setError("Bienvenido al Servidor");
+				oos.writeObject(mensaje2);
 
 				resume+="\r\n"+getHoraActual()+" A la espera de mensaje\r\n";
 				ois = new ObjectInputStream(socket.getInputStream());
@@ -55,7 +70,7 @@ public class ThreadCliente implements Runnable{
 				}
 			} catch (IOException e) {
 
-				resume+="\r\n"+getHoraActual()+" Conexión cerrada por el servidor.";
+				resume+="\r\n"+getHoraActual()+" Conexión perdida con el Cliente.";
 				try {
 					log.write(resume);
 					log.close();
@@ -70,6 +85,7 @@ public class ThreadCliente implements Runnable{
 			}
 		}
 	}
+
 
 	@SuppressWarnings({ })
 	private void gestionMessage(Message mensaje) throws IOException {
@@ -107,25 +123,32 @@ public class ThreadCliente implements Runnable{
 				System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 				String path = mensaje.getPath();
 				File directori = new File(path);
-				mensaje = new Message();
-				mensaje.setOrden("SputList");
-				mensaje.setSo(System.getProperty("os.name"));
-
-
-				listfiles = directori.listFiles();
-				while(i<listfiles.length)
-				{
-					System.out.println(listfiles[i].isDirectory());
-					if(listfiles[i].isDirectory()){
-						mensaje.addDire(listfiles[i].getName());
-					}
-					else
+				if(directori.exists()){
+					mensaje = new Message();
+					mensaje.setOrden("SputList");
+					mensaje.setSo(System.getProperty("os.name"));
+					listfiles = directori.listFiles();
+					while(i<listfiles.length)
 					{
-						mensaje.addDocs(listfiles[i].getName());
-					}
-					i++;
-				}		
+						if(listfiles[i].isDirectory()){
+							mensaje.addDire(listfiles[i].getName());
+						}
+						else
+						{
+							mensaje.addDocs(listfiles[i].getName());
+						}
+						i++;
+					}		
+				}
+				else
+				{
+					mensaje = new Message();
+					mensaje.setOrden("SputList");
+					mensaje.setSo(System.getProperty("os.name"));
+					mensaje.setError("El directorio no existe");
+				}
 			}
+			enviaMessage(mensaje);
 		}
 
 		if(mensaje.getOrden().equals("CgetFile")){
@@ -139,9 +162,6 @@ public class ThreadCliente implements Runnable{
 			System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
 			putFile(mensaje);
 		}
-
-
-		if(mensaje.getOrden().equals("SputList"))enviaMessage(mensaje);
 
 	}
 
@@ -160,14 +180,14 @@ public class ThreadCliente implements Runnable{
 
 			// Se crea un ObjectInputStream del socket para leer los mensajes
 			// que contienen el fichero.
-			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+			ObjectInputStream ois2 = new ObjectInputStream(socket.getInputStream());
 			FileOutputStream fos = null;
 			Files mensajeRecibido;
 			Object mensajeAux;
 			do
 			{
 				// Se lee el mensaje en una variabla auxiliar
-				mensajeAux = ois.readObject();
+				mensajeAux = ois2.readObject();
 
 				// Si es del tipo esperado, se trata
 				if (mensajeAux instanceof Files)
@@ -189,7 +209,7 @@ public class ThreadCliente implements Runnable{
 
 			// Se cierra socket y fichero
 			fos.close();
-			ois.close();
+			//ois2.close();
 			//socket.close();
 
 		} catch (Exception e)
@@ -251,7 +271,6 @@ public class ThreadCliente implements Runnable{
 			files.setBytesValidos(0);
 			oos.writeObject(files);
 		}
-		oos.close();
 	}
 
 	private void enviaMessage(Message mensaje) {
@@ -284,20 +303,82 @@ public class ThreadCliente implements Runnable{
 	}
 
 	private String getPath() {
-		File f = new File(System.getProperty("user.dir"));
-		File[] dire = f.listFiles();
-		int i = 0;
-		while(i<dire.length)
-		{
-			if(dire[i].getName().equals("log"))
-			{
-				return dire[i].getAbsolutePath();
-			}
-			i++;
-		}
+		File f = new File(System.getProperty("user.dir"),"log");
+		if(f.exists())return f.getAbsolutePath();
 		return null;
 
 	}
 
+	@SuppressWarnings("resource")
+	private boolean validaUsuario() {
+		try {
+			ObjectOutputStream oos;
+			oos = new ObjectOutputStream(socket.getOutputStream());
+			Message mensaje = new Message();
+			mensaje.setOrden("Login");
+			mensaje.setError("Usuario o contrasenña incorrecto");
+			oos.writeObject(mensaje);
+
+			resume+="\r\n"+getHoraActual()+" A la espera de Usuario i contraseña\r\n";
+			System.out.print(" A la espera de Usuario i contraseña\r\n");
+			ois = new ObjectInputStream(socket.getInputStream());
+			Object user = ois.readObject();
+			if (user instanceof Usuario){
+
+				resume+="\r\n"+getHoraActual()+"Validando usario\r\n";
+				resume+="\r\n"+getHoraActual()+((Usuario) user).getUser()+":"+((Usuario) user).getPass()+"\r\n";
+				String usuario = ((Usuario) user).getUser();
+				String password= ((Usuario) user).getPass();
+
+				System.out.println(usuario+" "+password);
+
+				File archivo = null;
+				FileReader fr = null;
+				BufferedReader br = null;
+				try {
+					// Apertura del fichero y creacion de BufferedReader para poder
+					// hacer una lectura comoda (disponer del metodo readLine()).
+					archivo = new File (System.getProperty("user.dir"),"usuarios");
+					fr = new FileReader (archivo);
+					br = new BufferedReader(fr);
+
+					// Lectura del fichero
+					String linea;
+					while((linea=br.readLine())!=null){
+						if(linea.equals(usuario+":"+password))return true;
+					}
+					return false;
+				}
+				catch(Exception e){
+					e.printStackTrace();
+				}finally{
+					// En el finally cerramos el fichero.
+					if( null != fr ){   
+						fr.close();  
+					}
+				}
+
+
+			}
+			else
+			{
+				System.out.print("Usuario no encontrado");
+			}
+		} catch (IOException e) {
+
+			resume+="\r\n"+getHoraActual()+" Conexión perdida con el Cliente.";
+			try {
+				log.write(resume);
+				log.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+
+		} catch (ClassNotFoundException e) {
+			System.out.println("Class no encontrada");
+		}
+
+		return false;
+	}
 }
 

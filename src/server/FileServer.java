@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -112,6 +113,19 @@ public class FileServer extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 		if ("Iniciar Servidor".equals(e.getActionCommand())){
+			File user = new File(System.getProperty("user.dir"),"usuarios");
+			
+			if(!user.exists())
+				try {
+					user.createNewFile();
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+		
+			File log = new File(System.getProperty("user.dir"),"log");
+			if(!log.exists())log.mkdir();
+
 			iniciar.setText("Detener Servidor");
 			try {
 				socketServidor = new ServerSocket(8888);
@@ -120,7 +134,6 @@ public class FileServer extends JFrame implements ActionListener {
 				hilo = new Thread(startServer);
 				hilo.start();
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		}

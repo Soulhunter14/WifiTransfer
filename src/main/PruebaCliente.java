@@ -1,13 +1,15 @@
 package main;
 
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Scanner;
+import java.util.Vector;
+
 import Class.Files;
 import Class.Message;
 
@@ -26,20 +28,38 @@ public class PruebaCliente {
 	public PruebaCliente(){
 		try
 		{
-			socket = new Socket("192.168.2.171", 35557);
+			socket = new Socket("127.0.0.1", 8888);
 			socket.setSoLinger(true, 10);
-			// ControlCliente control = new ControlCliente(socket, panel);
+			System.out.println("Conexion aceptada.");
+			int opc = 0;
+			Scanner entrada;
+			while(opc!=-1)
+			{
+				entrada=new Scanner(System.in);	
+				opc = entrada.nextInt();		
 
+				switch(opc){
+				case(1):
+					getList();
+				break;
+
+				case(2):
+					getList("C:\\Users\\alumne\\");	
+				break;
+				}
+			}
+		} catch (Exception e)
+		{
+			System.out.println("Conexion perdida con el Servidor");
+		}    
 			//getList();
-			//getList("C:\\Users\\alumne\\Documents\\GitHub");
+			//Thread.sleep(300);
+			//getList("C:\\Users\\alumne\\");
 			//getFile("C:\\Comp\\prova.txt");
 			//putFile("C:\\Comp\\prova.txt");
-		}catch(Exception obj){
-			//c&oacute;digo para tratar el error
-		}
+
 	}
 
-	@SuppressWarnings("unused")
 	private void getList(String path) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois;
 		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -48,6 +68,7 @@ public class PruebaCliente {
 		mensaje.setPath(path);
 		oos.writeObject(mensaje);
 
+		
 
 		ois = new ObjectInputStream(socket.getInputStream());
 		Object mensaje2 = ois.readObject();
@@ -56,20 +77,19 @@ public class PruebaCliente {
 
 			System.out.println(((Message) mensaje2).getOrden());
 			System.out.println(((Message) mensaje2).getPath());
-			System.out.print("1");
-			File directori = new File(((Message) mensaje2).getPath());
-			File[] llistafichers = directori.listFiles();
+			
+			Vector<String> dire = ((Message) mensaje2).getDire();
+			
 			int i=0;
 
-			while(i<llistafichers.length)
+			while(i<dire.size())
 			{
-				if(!llistafichers[i].isHidden())System.out.print(llistafichers[i].getName()+"\n");
+				System.out.println(dire.get(i));
 				i++;
 			}
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private void getList() throws IOException, ClassNotFoundException {
 		// TODO Auto-generated method stub
 		ObjectInputStream ois;
@@ -78,7 +98,6 @@ public class PruebaCliente {
 		mensaje.setOrden("CgetList");
 		oos.writeObject(mensaje);
 
-
 		ois = new ObjectInputStream(socket.getInputStream());
 		Object mensaje2 = ois.readObject();
 
@@ -87,13 +106,23 @@ public class PruebaCliente {
 			System.out.println(((Message) mensaje2).getOrden());
 			System.out.println(((Message) mensaje2).getPath());
 			System.out.print("1");
-			File directori = new File(((Message) mensaje2).getPath());
-			File[] llistafichers = directori.listFiles();
+			
+			Vector<String> dire = ((Message) mensaje2).getDire();
+			Vector<String> docs = (((Message) mensaje2).getDocs());
+			
 			int i=0;
-
-			while(i<llistafichers.length)
+			System.out.println("Directorios:");
+			while(i<dire.size())
 			{
-				if(!llistafichers[i].isHidden())System.out.print(llistafichers[i].getName()+"\n");
+				System.out.println(dire.get(i));
+				i++;
+			}
+			i=0;
+
+			System.out.println("Documentos:");
+			while(i<docs.size())
+			{
+				System.out.println(docs.get(i));
 				i++;
 			}
 		}		

@@ -56,7 +56,7 @@ public class ThreadServer implements Runnable{
 					VecSocket.get(i).close();
 					i++;
 				}
-				tg.interrupt();
+				if(tg!=null)tg.interrupt();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
