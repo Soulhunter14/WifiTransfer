@@ -12,6 +12,7 @@ import java.util.Vector;
 
 import Class.Files;
 import Class.Message;
+import Class.Usuario;
 
 
 
@@ -31,20 +32,44 @@ public class PruebaCliente {
 			socket = new Socket("127.0.0.1", 8888);
 			socket.setSoLinger(true, 10);
 			System.out.println("Conexion aceptada.");
+			int i =0;
+			while(i<1){
+				validaUsuario("joder","joder");
+				i++;
+			}
+			validaUsuario("xavi","4be9505dcf6a24de2d361a85327b13b7");
+
+			ObjectInputStream ois;
+			ois = new ObjectInputStream(socket.getInputStream());
+			Object mensaje = ois.readObject();
+			if (mensaje instanceof Message){
+				System.out.println(((Message) mensaje).getOrden());
+				System.out.println(((Message) mensaje).getError());
+			}
+
 			int opc = 0;
 			Scanner entrada;
 			while(opc!=-1)
 			{
+				System.out.println("\nA l'espera de noves ordres");
 				entrada=new Scanner(System.in);	
 				opc = entrada.nextInt();		
 
 				switch(opc){
 				case(1):
+
 					getList();
 				break;
 
 				case(2):
 					getList("C:\\Users\\alumne\\");	
+				break;
+
+				case(3):
+					getFile("C:\\Comp\\prova.txt");
+				break;
+				case(4):
+					putFile("C:\\Comp\\prova.txt");	
 				break;
 				}
 			}
@@ -52,13 +77,13 @@ public class PruebaCliente {
 		{
 			System.out.println("Conexion perdida con el Servidor");
 		}    
-			//getList();
-			//Thread.sleep(300);
-			//getList("C:\\Users\\alumne\\");
-			//getFile("C:\\Comp\\prova.txt");
-			//putFile("C:\\Comp\\prova.txt");
+		//getList();
+		//Thread.sleep(300);
+		//getList("C:\\Users\\alumne\\");
+		//putFile("C:\\Comp\\prova.txt");
 
 	}
+
 
 	private void getList(String path) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois;
@@ -68,7 +93,7 @@ public class PruebaCliente {
 		mensaje.setPath(path);
 		oos.writeObject(mensaje);
 
-		
+
 
 		ois = new ObjectInputStream(socket.getInputStream());
 		Object mensaje2 = ois.readObject();
@@ -77,9 +102,9 @@ public class PruebaCliente {
 
 			System.out.println(((Message) mensaje2).getOrden());
 			System.out.println(((Message) mensaje2).getPath());
-			
+
 			Vector<String> dire = ((Message) mensaje2).getDire();
-			
+
 			int i=0;
 
 			while(i<dire.size())
@@ -88,6 +113,9 @@ public class PruebaCliente {
 				i++;
 			}
 		}
+
+
+
 	}
 
 	private void getList() throws IOException, ClassNotFoundException {
@@ -105,11 +133,10 @@ public class PruebaCliente {
 
 			System.out.println(((Message) mensaje2).getOrden());
 			System.out.println(((Message) mensaje2).getPath());
-			System.out.print("1");
-			
+
 			Vector<String> dire = ((Message) mensaje2).getDire();
 			Vector<String> docs = (((Message) mensaje2).getDocs());
-			
+
 			int i=0;
 			System.out.println("Directorios:");
 			while(i<dire.size())
@@ -128,19 +155,17 @@ public class PruebaCliente {
 		}		
 	}
 
-	public void getFile(String fichero){
+	public void getFile(String fichero) throws ClassNotFoundException, IOException{
 		try
 		{
+
+
 			// Se envía un mensaje de petición de fichero.
 			ObjectOutputStream oos = new ObjectOutputStream(socket
 					.getOutputStream());
 			Message mensaje = new Message();
 			mensaje.setOrden("CgetFile");
 			mensaje.setPath(fichero);
-
-			//Files files = new Files();
-			//files.setNombreFichero(fichero);
-
 			oos.writeObject(mensaje);
 
 			// Se abre un fichero para empezar a copiar lo que se reciba.
@@ -154,6 +179,7 @@ public class PruebaCliente {
 			Object mensajeAux;
 			do
 			{
+
 				// Se lee el mensaje en una variabla auxiliar
 				mensajeAux = ois.readObject();
 
@@ -174,10 +200,8 @@ public class PruebaCliente {
 				}
 			} while (!mensajeRecibido.isUltimoMensaje());
 
-			// Se cierra socket y fichero
+			// Se cierra fichero
 			fos.close();
-			ois.close();
-			socket.close();
 
 		} catch (Exception e)
 		{
@@ -195,9 +219,9 @@ public class PruebaCliente {
 		Message mensaje = new Message();
 		mensaje.setOrden("CputFile");
 		mensaje.setPath(fichero);
-		
+
 		oos.writeObject(mensaje);
-		
+
 		mensaje = comprovaMessage();
 		if (mensaje!=null)
 		{
@@ -208,7 +232,7 @@ public class PruebaCliente {
 			FileInputStream fis = new FileInputStream(mensaje.getPath());
 			// Se instancia y rellena un mensaje de envio de fichero
 			Files files = new Files();
-			
+
 			files.setNombreFichero(mensaje.getPath());
 			// Se leen los primeros bytes del fichero en un campo del mensaje
 			int leidos = fis.read(files.getContenidoFichero());
@@ -249,7 +273,8 @@ public class PruebaCliente {
 				files.setBytesValidos(0);
 				oos.writeObject(files);
 			}
-			oos.close();
+
+			//oos.close();
 		}
 	}
 
@@ -263,7 +288,7 @@ public class PruebaCliente {
 			if (mensaje instanceof Message){
 				if(((Message) mensaje).getOrden().equals("SgetFile"))
 					((Message) mensaje).setPath("C:\\Comp\\prova.txt");
-					return (Message) mensaje;
+				return (Message) mensaje;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -273,5 +298,27 @@ public class PruebaCliente {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+
+	private void validaUsuario(String usuario,String password) throws IOException, ClassNotFoundException {
+		ObjectInputStream ois;
+		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+		Usuario user = new Usuario();
+		user.setUser(usuario);
+		user.setPass(password);
+		oos.writeObject(user);
+
+		ois = new ObjectInputStream(socket.getInputStream());
+		Object mensaje = ois.readObject();
+
+		if (mensaje instanceof Message){
+			if(((Message) mensaje).getError()==null)System.out.println("Error al validar el usuario");
+		}
+		else
+		{
+			System.out.print("Error");
+		}
+
 	}
 }
