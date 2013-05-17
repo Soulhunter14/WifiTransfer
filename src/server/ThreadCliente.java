@@ -1,10 +1,8 @@
 package server;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -12,6 +10,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+
+import com.db4o.Db4oEmbedded;
+import com.db4o.ObjectContainer;
+import com.db4o.config.EmbeddedConfiguration;
 
 import Class.Files;
 import Class.Message;
@@ -23,14 +26,16 @@ public class ThreadCliente implements Runnable{
 	private Socket socket;
 	FileWriter log;
 	String resume;
+	ObjectContainer db;
 	ObjectInputStream ois;
+	EmbeddedConfiguration config;
+	
 	public ThreadCliente(Socket socket)
 	{
 		this.socket = socket;
 	}
 
-	@Override
-	public void run() {
+public void run() {
 		try {
 
 			File f = new File(getPath(),getFechaActual()+"_"+socket.getInetAddress().toString().substring(1, socket.getInetAddress().toString().length())+".txt");
@@ -43,19 +48,23 @@ public class ThreadCliente implements Runnable{
 		
 		while(!validaUsuario());
 		
+		ObjectOutputStream oos;
+		try {
+			oos = new ObjectOutputStream(socket.getOutputStream());
+			Message mensaje2 = new Message();
+			mensaje2.setOrden("Login");
+			mensaje2.setError("Bienvenido al Servidor");
+			oos.writeObject(mensaje2);
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+
+
 		while (true)
 		{
 
-			ObjectOutputStream oos;
-
-
 			try {
-
-				oos = new ObjectOutputStream(socket.getOutputStream());
-				Message mensaje2 = new Message();
-				mensaje2.setOrden("Login");
-				mensaje2.setError("Bienvenido al Servidor");
-				oos.writeObject(mensaje2);
 
 				resume+="\r\n"+getHoraActual()+" A la espera de mensaje\r\n";
 				ois = new ObjectInputStream(socket.getInputStream());
@@ -174,6 +183,7 @@ public class ThreadCliente implements Runnable{
 			mensaje = new Message();
 			mensaje.setOrden("SgetFile");
 			mensaje.setSo(System.getProperty("os.name"));
+			mensaje.setPath(System.getProperty("user.dir"));
 			oos.writeObject(mensaje);
 
 			// Se abre un fichero para empezar a copiar lo que se reciba.
@@ -309,7 +319,6 @@ public class ThreadCliente implements Runnable{
 
 	}
 
-	@SuppressWarnings("resource")
 	private boolean validaUsuario() {
 		try {
 			ObjectOutputStream oos;
@@ -331,38 +340,12 @@ public class ThreadCliente implements Runnable{
 				String password= ((Usuario) user).getPass();
 
 				System.out.println(usuario+" "+password);
-
-				File archivo = null;
-				FileReader fr = null;
-				BufferedReader br = null;
-				try {
-					// Apertura del fichero y creacion de BufferedReader para poder
-					// hacer una lectura comoda (disponer del metodo readLine()).
-					archivo = new File (System.getProperty("user.dir"),"usuarios");
-					fr = new FileReader (archivo);
-					br = new BufferedReader(fr);
-
-					// Lectura del fichero
-					String linea;
-					while((linea=br.readLine())!=null){
-						if(linea.equals(usuario+":"+password))return true;
-					}
-					return false;
-				}
-				catch(Exception e){
-					e.printStackTrace();
-				}finally{
-					// En el finally cerramos el fichero.
-					if( null != fr ){   
-						fr.close();  
-					}
-				}
-
-
+				
+				return verificaUsuario(usuario,password);
 			}
 			else
 			{
-				System.out.print("Usuario no encontrado");
+				System.out.print("La classe facilitaada no es la correcta.");
 			}
 		} catch (IOException e) {
 
@@ -380,5 +363,38 @@ public class ThreadCliente implements Runnable{
 
 		return false;
 	}
+
+	private boolean verificaUsuario(String usuario,String password) {
+
+		config = Db4oEmbedded.newConfiguration();
+		db = Db4oEmbedded.openFile(config, "usuarios");
+		
+		File usuarios = new File(System.getProperty("user.dir"),"usuarios");
+
+		resume+="\r\n"+getHoraActual()+" Usuario: "+usuario+"  Contraseña: "+password+"  \r\n";
+		// Sera para despues
+		if (usuarios.exists()) {
+
+			Usuario proto = new Usuario(); // Tots
+			List<Usuario> result = db.queryByExample(proto);
+			System.out.println(result.size());
+			if (result.size() != 0);
+			for (Usuario u : result) {
+				if(u.getUser().equals(usuario)&&u.getPass().equals(password))
+					{
+					resume+="\r\n"+getHoraActual()+" Usuario Correcto  \r\n";
+					System.out.println("Usuario correcto");
+					db.close();
+					return true;
+					}
+			}
+		}
+		resume+="\r\n"+getHoraActual()+" Usuario incorrecto o contraseña incorrecta  \r\n";
+		System.out.println("Usuario incorrecto o contraseña incorrecta");
+		db.close();
+		return false;		
+	}
+
 }
+
 

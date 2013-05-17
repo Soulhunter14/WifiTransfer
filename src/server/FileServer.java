@@ -20,6 +20,14 @@ import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 
+
+import Class.EncryptMD5;
+import Class.Usuario;
+
+import com.db4o.Db4oEmbedded;
+import com.db4o.ObjectContainer;
+import com.db4o.config.EmbeddedConfiguration;
+
 /**
  * AX Team. 
  * Classe servidor que permite las conexiones entrantes via Sockets.
@@ -38,6 +46,7 @@ public class FileServer extends JFrame implements ActionListener {
 	JLabel home;
 	JLabel ip;
 	JLabel puerto;
+	ObjectContainer db;
 	JButton iniciar;
 	Runnable startServer;
 	Long id;
@@ -113,16 +122,9 @@ public class FileServer extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 		if ("Iniciar Servidor".equals(e.getActionCommand())){
-			File user = new File(System.getProperty("user.dir"),"usuarios");
 			
-			if(!user.exists())
-				try {
-					user.createNewFile();
-				} catch (IOException e2) {
-					// TODO Auto-generated catch block
-					e2.printStackTrace();
-				}
-		
+			verificaUsuario();
+
 			File log = new File(System.getProperty("user.dir"),"log");
 			if(!log.exists())log.mkdir();
 
@@ -153,4 +155,43 @@ public class FileServer extends JFrame implements ActionListener {
 			}
 		}
 	}
+
+	private void verificaUsuario() {
+		System.out.println("Hoola");
+		File usuarios = new File(System.getProperty("user.dir"),"usuarios");
+		if(!usuarios.exists())
+			try {
+				usuarios.createNewFile();
+				
+				EmbeddedConfiguration config = Db4oEmbedded.newConfiguration();
+				config.common().objectClass(Usuario.class)
+						.cascadeOnUpdate(true);
+				config.common().objectClass(Usuario.class)
+						.cascadeOnDelete(true);
+				db = Db4oEmbedded.openFile(config, usuarios.getAbsolutePath());
+				
+				Usuario u1 = new Usuario();
+				Usuario u2 = new Usuario();
+				Usuario u3 = new Usuario();
+				
+				u1.setUser("eloy");
+				u2.setUser("alex");
+				u3.setUser("xavi");
+System.out.println("Hoola");
+				u1.setPass(EncryptMD5.encriptaEnMD5("eloy"));
+				u2.setPass(EncryptMD5.encriptaEnMD5("alex"));
+				u3.setPass(EncryptMD5.encriptaEnMD5("xavi"));
+				
+				db.store(u1);
+				db.store(u2);
+				db.store(u3);
+				
+				db.close();
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+	}
+
 }
