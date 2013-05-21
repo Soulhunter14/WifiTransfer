@@ -19,6 +19,7 @@ import com.db4o.config.EmbeddedConfiguration;
 import Class.Files;
 import Class.Message;
 import Class.Usuario;
+import Class.WriteOnFile;
 
 
 public class ThreadCliente implements Runnable{
@@ -39,12 +40,15 @@ public void run() {
 		try {
 
 			File f = new File(getPath(),getFechaActual()+"_"+socket.getInetAddress().toString().substring(1, socket.getInetAddress().toString().length())+".txt");
-			log = new FileWriter(f);
+			log = new FileWriter(f,true);
+			String rlogsistema = new File(System.getProperty("user.dir"),"logsistema").getAbsolutePath();
+			new WriteOnFile(rlogsistema,"Conexión Aceptada\r\n");
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
 		resume = log.toString();
 		resume =getHoraActual()+" Conexión Aceptada\r\n";
+		
 		
 		while(!validaUsuario());
 		
@@ -79,7 +83,7 @@ public void run() {
 				}
 			} catch (IOException e) {
 
-				resume+="\r\n"+getHoraActual()+" Conexión perdida con el Cliente.";
+				resume+="\r\n"+getHoraActual()+" Conexión perdida con el Cliente.\r\n\r\n";
 				try {
 					log.write(resume);
 					log.close();
@@ -217,10 +221,8 @@ public void run() {
 				}
 			} while (!mensajeRecibido.isUltimoMensaje());
 
-			// Se cierra socket y fichero
+			// Se cierra fichero
 			fos.close();
-			//ois2.close();
-			//socket.close();
 
 		} catch (Exception e)
 		{

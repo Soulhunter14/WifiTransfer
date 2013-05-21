@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
 
+import Class.WriteOnFile;
+
 public class ThreadServer implements Runnable{
 
 	ServerSocket socketServidor;
@@ -21,11 +23,7 @@ public class ThreadServer implements Runnable{
 	@Override
 	public void run() {
 		try
-		{
-			// Se abre el socket servidor
-			//File folder = new File(System.getProperty("user.dir")+"\\"+getFechaActual());
-			//folder.mkdir();
-			System.out.println("Servidor Iniciado");
+		{			
 			while (true)
 			{
 
@@ -40,16 +38,13 @@ public class ThreadServer implements Runnable{
 				Runnable newclient = new ThreadCliente(cliente); 
 				tg = new ThreadGroup("Servers Threads");
 				Thread hilo = new Thread(tg, newclient);
-				//Thread hilo = new Thread(newclient);
 				hilo.start();       
 				System.out.println("Cliente Aceptado");
 				if(socketServidor.isClosed())break;
 			} 
-			//System.out.println("Servidor cerrado");
 
 		} catch (Exception e)
 		{
-			System.out.println("Servidor Cerrado.");
 			try {
 				int i  = 0;
 				while(i<VecSocket.size()){
@@ -57,6 +52,7 @@ public class ThreadServer implements Runnable{
 					i++;
 				}
 				if(tg!=null)tg.interrupt();
+				new WriteOnFile(System.getProperty("user.dir"),"Servidor Cerrado \n\r");
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
