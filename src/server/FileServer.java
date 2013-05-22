@@ -39,10 +39,7 @@ import com.db4o.config.EmbeddedConfiguration;
  * 
  */
 public class FileServer extends JFrame implements ActionListener {
-
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = 56L;
 	static FileServer fs;
 	ServerSocket socketServidor;
@@ -147,8 +144,6 @@ public class FileServer extends JFrame implements ActionListener {
 		return jp;
 	}
 
-
-
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if ("Iniciar Servidor".equals(e.getActionCommand())){
@@ -188,7 +183,6 @@ public class FileServer extends JFrame implements ActionListener {
 			}
 		}
 	}
-
 
 	private boolean verificaArchivos() throws IOException {
 

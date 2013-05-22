@@ -30,6 +30,8 @@ public class ThreadCliente implements Runnable{
 	ObjectContainer db;
 	ObjectInputStream ois;
 	EmbeddedConfiguration config;
+	File[] listfiles;
+	int i;
 	
 	public ThreadCliente(Socket socket)
 	{
@@ -102,66 +104,10 @@ public void run() {
 
 	@SuppressWarnings({ })
 	private void gestionMessage(Message mensaje) throws IOException {
-		File[] listfiles;
-		int i = 0;
 
 
 		if(mensaje.getOrden().equals("CgetList")){
-			if(mensaje.getPath()==null){
-				resume+="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" sin path\r\n";
-				System.out.println(mensaje.getOrden()+" sin path\n");
-				String path = System.getProperty("user.dir");
-				File directori = new File(path);
-				mensaje = new Message();
-				mensaje.setOrden("SputList");
-				mensaje.setSo(System.getProperty("os.name"));
-				mensaje.setPath(System.getProperty("user.dir"));
-				listfiles = directori.listFiles();
-				i = 0;
-
-				while(i<listfiles.length)
-				{
-					if(!listfiles[i].isHidden()){
-						if(listfiles[i].isDirectory()){
-							mensaje.addDire(listfiles[i].getName());
-						}
-						else{
-							mensaje.addDocs(listfiles[i].getName());
-						}
-					}
-					i++;
-				}		
-			}else{
-				resume+="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" "+mensaje.getPath()+"\r\n";
-				System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
-				String path = mensaje.getPath();
-				File directori = new File(path);
-				if(directori.exists()){
-					mensaje = new Message();
-					mensaje.setOrden("SputList");
-					mensaje.setSo(System.getProperty("os.name"));
-					listfiles = directori.listFiles();
-					while(i<listfiles.length)
-					{
-						if(listfiles[i].isDirectory()){
-							mensaje.addDire(listfiles[i].getName());
-						}
-						else
-						{
-							mensaje.addDocs(listfiles[i].getName());
-						}
-						i++;
-					}		
-				}
-				else
-				{
-					mensaje = new Message();
-					mensaje.setOrden("SputList");
-					mensaje.setSo(System.getProperty("os.name"));
-					mensaje.setError("El directorio no existe");
-				}
-			}
-			enviaMessage(mensaje);
+			getList(mensaje);
 		}
 
 		if(mensaje.getOrden().equals("CgetFile")){
@@ -176,6 +122,65 @@ public void run() {
 			putFile(mensaje);
 		}
 
+	}
+
+	private void getList(Message mensaje) {
+		if(mensaje.getPath()==null){
+			resume+="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" sin path\r\n";
+			System.out.println(mensaje.getOrden()+" sin path\n");
+			String path = System.getProperty("user.dir");
+			File directori = new File(path);
+			mensaje = new Message();
+			mensaje.setOrden("SputList");
+			mensaje.setSo(System.getProperty("os.name"));
+			mensaje.setPath(System.getProperty("user.dir"));
+			listfiles = directori.listFiles();
+			i = 0;
+
+			while(i<listfiles.length)
+			{
+				if(!listfiles[i].isHidden()){
+					if(listfiles[i].isDirectory()){
+						mensaje.addDire(listfiles[i].getName());
+					}
+					else{
+						mensaje.addDocs(listfiles[i].getName());
+					}
+				}
+				i++;
+			}		
+		}else{
+			resume+="\r\n"+getHoraActual()+" "+mensaje.getOrden()+" "+mensaje.getPath()+"\r\n";
+			System.out.println(mensaje.getOrden()+" "+mensaje.getPath()+"\n");
+			String path = mensaje.getPath();
+			File directori = new File(path);
+			if(directori.exists()){
+				mensaje = new Message();
+				mensaje.setOrden("SputList");
+				mensaje.setSo(System.getProperty("os.name"));
+				listfiles = directori.listFiles();
+				while(i<listfiles.length)
+				{
+					if(listfiles[i].isDirectory()){
+						mensaje.addDire(listfiles[i].getName());
+					}
+					else
+					{
+						mensaje.addDocs(listfiles[i].getName());
+					}
+					i++;
+				}		
+			}
+			else
+			{
+				mensaje = new Message();
+				mensaje.setOrden("SputList");
+				mensaje.setSo(System.getProperty("os.name"));
+				mensaje.setError("El directorio no existe");
+			}
+		}
+		enviaMessage(mensaje);
+		
 	}
 
 	private void putFile(Message mensaje) {

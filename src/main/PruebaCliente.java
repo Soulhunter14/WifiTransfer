@@ -84,7 +84,6 @@ public class PruebaCliente {
 
 	}
 
-
 	private void getList(String path) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois;
 		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -278,7 +277,6 @@ public class PruebaCliente {
 		}
 	}
 
-
 	private Message comprovaMessage() {
 		// TODO Auto-generated method stub
 		ObjectInputStream ois;
@@ -299,7 +297,6 @@ public class PruebaCliente {
 		}
 		return null;
 	}
-
 
 	private void validaUsuario(String usuario,String password) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois;
